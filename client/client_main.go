@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"time"
 	"websocket/utils"
@@ -14,9 +13,7 @@ func main() {
 
 	clientId := os.Args[1]
 
-	config := NewClientConfig("ws", "localhost", "8080", "/ws", 3, http.Header{
-		"Client-Id": {clientId},
-	})
+	config := NewClientConfig("ws", "localhost", "8080", "/ws", clientId, 5, 10)
 
 	callbacks := &ClientCallbacks{
 		Started: func() {

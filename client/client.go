@@ -22,7 +22,6 @@ type ClientConfig struct {
 
 	MaxReadMessageSize int
 
-	ReconnectWait    time.Duration
 	ReadTimeout      time.Duration
 	WriteTimeout     time.Duration
 	HandshakeTimeout time.Duration
@@ -31,23 +30,24 @@ type ClientConfig struct {
 	RetryInterval time.Duration
 }
 
-func NewClientConfig(scheme, host, port, path string, reconnectWait int, headers http.Header) *ClientConfig {
+func NewClientConfig(scheme, host, port, path, clientId string, retryInterval, maxRetries int) *ClientConfig {
 	return &ClientConfig{
-		Scheme:  scheme,
-		Host:    host,
-		Port:    port,
-		Path:    path,
-		Headers: headers,
+		Scheme: scheme,
+		Host:   host,
+		Port:   port,
+		Path:   path,
+		Headers: http.Header{
+			"Client-Id": {clientId},
+		},
 
 		MaxReadMessageSize: 10 * 1024 * 1024,
 
-		ReconnectWait:    time.Duration(reconnectWait) * time.Second,
 		ReadTimeout:      60 * time.Second,
 		WriteTimeout:     10 * time.Second,
 		HandshakeTimeout: 10 * time.Second,
 
-		MaxRetries:    10,
-		RetryInterval: 5 * time.Second,
+		MaxRetries:    maxRetries,
+		RetryInterval: time.Duration(retryInterval) * time.Second,
 	}
 }
 
