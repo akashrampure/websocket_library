@@ -1,4 +1,3 @@
-// Multi-client WebSocket server (minimal changes)
 package main
 
 import (
