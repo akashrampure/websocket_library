@@ -20,17 +20,17 @@ func main() {
 		Stopped: func() {
 			fmt.Println("Server stopped")
 		},
-		OnConnect: func() {
-			fmt.Println("Client connected")
+		OnConnect: func(clientID string) {
+			fmt.Printf("Client connected: %s\n", clientID)
 		},
-		OnDisconnect: func(err error) {
-			fmt.Println("Client disconnected", err)
+		OnDisconnect: func(clientID string, err error) {
+			fmt.Printf("Client disconnected: %s, error: %v\n", clientID, err)
 		},
-		OnMessage: func(msg []byte) {
-			fmt.Println("Received message", string(msg))
+		OnMessage: func(clientID string, msg []byte) {
+			fmt.Printf("Received message from client: %s, message: %s\n", clientID, string(msg))
 		},
 		OnError: func(err error) {
-			fmt.Println("Error:", err)
+			fmt.Printf("Error: %v\n", err)
 		},
 	}
 

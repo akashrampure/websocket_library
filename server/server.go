@@ -53,9 +53,9 @@ func NewWsConfig(addr, path string, allowedOrigins []string) *WsConfig {
 type WsCallback struct {
 	Started      func()
 	Stopped      func()
-	OnConnect    func()
-	OnDisconnect func(err error)
-	OnMessage    func(msg []byte)
+	OnConnect    func(clientID string)
+	OnDisconnect func(clientID string, err error)
+	OnMessage    func(clientID string, msg []byte)
 	OnError      func(err error)
 }
 
@@ -103,7 +103,7 @@ func NewServer(config *WsConfig, callback *WsCallback, logger *log.Logger) *Serv
 	}
 }
 
-func (s *Server) OnMessage(handler func(msg []byte)) {
+func (s *Server) OnMessage(handler func(clientID string, msg []byte)) {
 	s.callbacks.OnMessage = handler
 }
 
@@ -115,11 +115,11 @@ func (s *Server) OnStopped(handler func()) {
 	s.callbacks.Stopped = handler
 }
 
-func (s *Server) OnConnect(handler func()) {
+func (s *Server) OnConnect(handler func(clientID string)) {
 	s.callbacks.OnConnect = handler
 }
 
-func (s *Server) OnDisconnect(handler func(err error)) {
+func (s *Server) OnDisconnect(handler func(clientID string, err error)) {
 	s.callbacks.OnDisconnect = handler
 }
 
@@ -180,7 +180,7 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if s.callbacks.OnConnect != nil {
-		s.callbacks.OnConnect()
+		s.callbacks.OnConnect(clientID)
 	}
 
 	go s.listen(clientID, conn)
@@ -200,7 +200,7 @@ func (s *Server) listen(clientID string, conn *websocket.Conn) {
 	defer func() {
 		s.closeConnection(clientID, conn, "client disconnected")
 		if s.callbacks.OnDisconnect != nil {
-			s.callbacks.OnDisconnect(fmt.Errorf("client disconnected: %s", clientID))
+			s.callbacks.OnDisconnect(clientID, fmt.Errorf("client terminated connection"))
 		}
 	}()
 
@@ -230,7 +230,7 @@ func (s *Server) listen(clientID string, conn *websocket.Conn) {
 		}
 
 		if s.callbacks.OnMessage != nil {
-			s.callbacks.OnMessage(msg)
+			s.callbacks.OnMessage(client.ClientID, msg)
 		}
 	}
 }
@@ -261,7 +261,7 @@ func (s *Server) Broadcast(msg interface{}) {
 				s.logger.Printf("Broadcast error to client %s: %v", c.ClientID, err)
 				s.closeConnection(c.ClientID, c.wsConn, "client disconnected due to error")
 				if s.callbacks.OnDisconnect != nil {
-					s.callbacks.OnDisconnect(fmt.Errorf("client %s disconnected due to error: %v", c.ClientID, err))
+					s.callbacks.OnDisconnect(c.ClientID, fmt.Errorf("client disconnected due to error: %v", err))
 				}
 			} else {
 				c.wsConn.SetWriteDeadline(time.Time{})
